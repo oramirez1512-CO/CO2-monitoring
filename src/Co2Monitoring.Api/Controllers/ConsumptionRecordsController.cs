@@ -1,7 +1,8 @@
-using Co2Monitoring.Application.Abstractions;
-using Co2Monitoring.Application.Dtos;
-using Co2Monitoring.Domain.Entities;
+using Co2Monitoring.Api.Data;
+using Co2Monitoring.Api.Domain;
+using Co2Monitoring.Api.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Co2Monitoring.Api.Controllers;
 
@@ -9,11 +10,11 @@ namespace Co2Monitoring.Api.Controllers;
 [Route("api/v1/consumption-records")]
 public class ConsumptionRecordsController : ControllerBase
 {
-    private readonly IConsumptionRecordRepository _repository;
+    private readonly AppDbContext _db;
 
-    public ConsumptionRecordsController(IConsumptionRecordRepository repository)
+    public ConsumptionRecordsController(AppDbContext db)
     {
-        _repository = repository;
+        _db = db;
     }
 
     [HttpGet]
@@ -22,9 +23,16 @@ public class ConsumptionRecordsController : ControllerBase
         [FromQuery] string? site,
         CancellationToken ct)
     {
-        var records = string.IsNullOrWhiteSpace(site)
-            ? await _repository.GetAllAsync(ct)
-            : await _repository.GetBySiteAsync(site, ct);
+        var query = _db.ConsumptionRecords.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(site))
+        {
+            query = query.Where(x => x.Site == site);
+        }
+
+        var records = await query
+            .OrderBy(x => x.Site)
+            .ThenBy(x => x.Month)
+            .ToListAsync(ct);
 
         return Ok(records.Select(ToDto));
     }
@@ -34,7 +42,8 @@ public class ConsumptionRecordsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ConsumptionRecordDto>> GetById(int id, CancellationToken ct)
     {
-        var record = await _repository.GetByIdAsync(id, ct);
+        var record = await _db.ConsumptionRecords.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
         return record is null ? NotFound() : Ok(ToDto(record));
     }
 
@@ -50,15 +59,18 @@ public class ConsumptionRecordsController : ControllerBase
             return BadRequest("month must use YYYY-MM format.");
         }
 
-        var created = await _repository.AddAsync(new ConsumptionRecord
+        var entity = new ConsumptionRecord
         {
             Site = request.Site.Trim(),
             Month = request.Month,
             EnergyKwh = request.EnergyKwh,
             Co2Kg = request.Co2Kg
-        }, ct);
+        };
 
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, ToDto(created));
+        _db.ConsumptionRecords.Add(entity);
+        await _db.SaveChangesAsync(ct);
+
+        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, ToDto(entity));
     }
 
     [HttpPost("bulk")]
@@ -86,7 +98,9 @@ public class ConsumptionRecordsController : ControllerBase
             Co2Kg = r.Co2Kg
         }).ToList();
 
-        await _repository.AddRangeAsync(entities, ct);
+        await _db.ConsumptionRecords.AddRangeAsync(entities, ct);
+        await _db.SaveChangesAsync(ct);
+
         return StatusCode(StatusCodes.Status201Created, entities.Select(ToDto));
     }
 

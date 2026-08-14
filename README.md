@@ -16,22 +16,31 @@ Plan técnico: [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
 - .NET 8 / C#
 - ASP.NET Core Web API (REST)
 - EF Core + SQLite
-- Capas: `Api` → `Application` → `Domain` ← `Infrastructure`
+- **Un solo proyecto** con carpetas (suficiente para una prueba técnica)
 
-## Estructura
+## Estructura (mapa rápido)
 
 ```
-src/
-  Co2Monitoring.Api/
-  Co2Monitoring.Application/
-  Co2Monitoring.Domain/
-  Co2Monitoring.Infrastructure/
+src/Co2Monitoring.Api/
+  Controllers/     → HTTP (endpoints REST)
+  Domain/          → modelo + umbrales + IAnomalyRule
+  Services/        → detección + stats; Rules/ = R1–R3
+  Data/            → EF Core + SQLite
+  Dtos/            → request/response JSON
+  Program.cs       → arranque y DI
 tests/
-  Co2Monitoring.UnitTests/
 docs/
-  BUSINESS_RULES.md
-  IMPLEMENTATION_PLAN.md
 ```
+
+| Carpeta / archivo | Para qué sirve |
+|-------------------|----------------|
+| `Controllers/` | Recibe HTTP, valida input básico, llama a DB o al servicio |
+| `Domain/` | Entidades y contratos de reglas (sin EF ni HTTP) |
+| `Services/` | Orquesta R1–R3 y calcula stats del histórico |
+| `Services/Rules/` | Aquí van las reglas concretas (pendiente) |
+| `Data/` | Persistencia SQLite |
+| `Dtos/` | Formas del JSON de entrada/salida |
+| `appsettings.json` | Umbrales (`AnomalyDetection`) y connection string |
 
 ## Requisitos
 
@@ -51,10 +60,8 @@ dotnet build
 dotnet run --project src/Co2Monitoring.Api
 ```
 
-Swagger (Development): `https://localhost:<puerto>/swagger`  
+Swagger (Development): `http://localhost:5120/swagger`  
 Health: `GET /api/v1/health`
-
-Los umbrales están en `src/Co2Monitoring.Api/appsettings.json` bajo `AnomalyDetection`.
 
 ## API (v1)
 
@@ -68,35 +75,11 @@ Los umbrales están en `src/Co2Monitoring.Api/appsettings.json` bajo `AnomalyDet
 | `POST` | `/api/v1/anomaly-reviews/{id}` | Evaluar uno |
 | `GET` | `/api/v1/health` | Health check |
 
-Ejemplo de salida de revisión:
+## Estado actual
 
-```json
-{
-  "id": 4,
-  "requiresReview": true,
-  "reason": "Energy consumption significantly exceeds historical behavior for site",
-  "severity": "High"
-}
-```
+Listo: API + SQLite + orquestador de detección + options.
 
-## Estado actual (scaffolding)
-
-Listo:
-
-- Solution y capas con DIP
-- Modelo de dominio + contratos
-- Controllers REST
-- SQLite + repositorio + `EnsureCreated`
-- Options de anomalías en config
-- Orquestador de detección (sin reglas R1–R3 todavía)
-
-Pendiente (siguientes fases del plan):
-
-- Implementar R1 / R2 / R3 + `SiteStatsCalculator`
-- Seed del dataset de la prueba
-- Migraciones EF
-- Tests de las reglas
-- Notas de demo Escenario A / B en vídeo
+Pendiente: R1/R2/R3, seed del dataset, tests de reglas, notas demo Escenario A/B.
 
 ## Tests
 
@@ -106,6 +89,6 @@ dotnet test
 
 ## Escenarios de negocio (resumen)
 
-**A — Crecimiento real de fábrica:** no apagar la detección; añadir eventos de capacidad / feedback del revisor para bajar falsos positivos.
+**A — Crecimiento real de fábrica:** no apagar la detección; añadir eventos de capacidad / feedback del revisor.
 
-**B — LLM:** no como juez único. Opcional como apoyo con stats ya calculadas (template en `BUSINESS_RULES.md`).
+**B — LLM:** no como juez único. Opcional como apoyo (template en `BUSINESS_RULES.md`).

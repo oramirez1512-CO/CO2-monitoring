@@ -1,4 +1,4 @@
-namespace Co2Monitoring.Domain.Enums;
+namespace Co2Monitoring.Api.Domain;
 
 public enum Severity
 {

@@ -1,6 +1,6 @@
-using Co2Monitoring.Application;
-using Co2Monitoring.Infrastructure;
-using Co2Monitoring.Infrastructure.Persistence;
+using Co2Monitoring.Api.Data;
+using Co2Monitoring.Api.Domain;
+using Co2Monitoring.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,8 +8,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.Configure<AnomalyDetectionOptions>(
+    builder.Configuration.GetSection(AnomalyDetectionOptions.SectionName));
+
+var connectionString = builder.Configuration.GetConnectionString("Default")
+    ?? "Data Source=co2monitoring.db";
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(connectionString));
+
+builder.Services.AddSingleton<SiteStatsCalculator>();
+builder.Services.AddScoped<AnomalyDetectionService>();
+// Register R1/R2/R3 here later: services.AddSingleton<IAnomalyRule, InvalidValueRule>();
+
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>();
 

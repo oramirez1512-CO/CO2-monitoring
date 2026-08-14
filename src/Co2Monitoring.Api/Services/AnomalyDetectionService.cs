@@ -1,30 +1,25 @@
-using Co2Monitoring.Application.Abstractions;
-using Co2Monitoring.Domain.Configuration;
-using Co2Monitoring.Domain.Entities;
-using Co2Monitoring.Domain.Enums;
-using Co2Monitoring.Domain.Models;
-using Co2Monitoring.Domain.Rules;
+using Co2Monitoring.Api.Data;
+using Co2Monitoring.Api.Domain;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace Co2Monitoring.Application.Services;
+namespace Co2Monitoring.Api.Services;
 
-/// <summary>
-/// Scaffold: orchestrates rules once R1–R3 are implemented.
-/// </summary>
-public class AnomalyDetectionService : IAnomalyDetectionService
+/// <summary>Runs all IAnomalyRule implementations and merges severity + reasons.</summary>
+public class AnomalyDetectionService
 {
-    private readonly IConsumptionRecordRepository _repository;
-    private readonly ISiteStatsCalculator _statsCalculator;
+    private readonly AppDbContext _db;
+    private readonly SiteStatsCalculator _statsCalculator;
     private readonly IEnumerable<IAnomalyRule> _rules;
     private readonly AnomalyDetectionOptions _options;
 
     public AnomalyDetectionService(
-        IConsumptionRecordRepository repository,
-        ISiteStatsCalculator statsCalculator,
+        AppDbContext db,
+        SiteStatsCalculator statsCalculator,
         IEnumerable<IAnomalyRule> rules,
         IOptions<AnomalyDetectionOptions> options)
     {
-        _repository = repository;
+        _db = db;
         _statsCalculator = statsCalculator;
         _rules = rules;
         _options = options.Value;
@@ -32,16 +27,25 @@ public class AnomalyDetectionService : IAnomalyDetectionService
 
     public async Task<AnomalyAssessment> AssessAsync(int recordId, CancellationToken ct = default)
     {
-        var record = await _repository.GetByIdAsync(recordId, ct)
+        var record = await _db.ConsumptionRecords.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == recordId, ct)
             ?? throw new KeyNotFoundException($"Consumption record {recordId} was not found.");
 
-        var history = await _repository.GetBySiteAsync(record.Site, ct);
+        var history = await _db.ConsumptionRecords.AsNoTracking()
+            .Where(x => x.Site == record.Site)
+            .OrderBy(x => x.Month)
+            .ToListAsync(ct);
+
         return AssessRecord(record, history);
     }
 
     public async Task<IReadOnlyList<AnomalyAssessment>> AssessAllAsync(CancellationToken ct = default)
     {
-        var all = await _repository.GetAllAsync(ct);
+        var all = await _db.ConsumptionRecords.AsNoTracking()
+            .OrderBy(x => x.Site)
+            .ThenBy(x => x.Month)
+            .ToListAsync(ct);
+
         var results = new List<AnomalyAssessment>();
 
         foreach (var group in all.GroupBy(r => r.Site))

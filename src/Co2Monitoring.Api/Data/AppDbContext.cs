@@ -1,7 +1,7 @@
-using Co2Monitoring.Domain.Entities;
+using Co2Monitoring.Api.Domain;
 using Microsoft.EntityFrameworkCore;
 
-namespace Co2Monitoring.Infrastructure.Persistence;
+namespace Co2Monitoring.Api.Data;
 
 public class AppDbContext : DbContext
 {

@@ -1,6 +1,6 @@
-using Co2Monitoring.Application.Abstractions;
-using Co2Monitoring.Application.Dtos;
-using Co2Monitoring.Domain.Models;
+using Co2Monitoring.Api.Domain;
+using Co2Monitoring.Api.Dtos;
+using Co2Monitoring.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Co2Monitoring.Api.Controllers;
@@ -9,9 +9,9 @@ namespace Co2Monitoring.Api.Controllers;
 [Route("api/v1/anomaly-reviews")]
 public class AnomalyReviewsController : ControllerBase
 {
-    private readonly IAnomalyDetectionService _detectionService;
+    private readonly AnomalyDetectionService _detectionService;
 
-    public AnomalyReviewsController(IAnomalyDetectionService detectionService)
+    public AnomalyReviewsController(AnomalyDetectionService detectionService)
     {
         _detectionService = detectionService;
     }

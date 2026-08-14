@@ -1,4 +1,4 @@
-namespace Co2Monitoring.Domain.Entities;
+namespace Co2Monitoring.Api.Domain;
 
 public class ConsumptionRecord
 {

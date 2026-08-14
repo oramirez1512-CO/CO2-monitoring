@@ -1,8 +1,6 @@
-namespace Co2Monitoring.Domain.Configuration;
+namespace Co2Monitoring.Api.Domain;
 
-/// <summary>
-/// Thresholds from BUSINESS_RULES.md. Bound from appsettings via Infrastructure.
-/// </summary>
+/// <summary>Thresholds from BUSINESS_RULES.md — bound from appsettings.json.</summary>
 public class AnomalyDetectionOptions
 {
     public const string SectionName = "AnomalyDetection";
