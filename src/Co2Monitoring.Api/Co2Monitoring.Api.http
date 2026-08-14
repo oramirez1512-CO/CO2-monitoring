@@ -1,0 +1,6 @@
+@Co2Monitoring.Api_HostAddress = http://localhost:5120
+
+GET {{Co2Monitoring.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
