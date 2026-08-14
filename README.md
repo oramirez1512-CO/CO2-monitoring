@@ -65,33 +65,59 @@ Las reglas implementan `IAnomalyRule`. El orquestador (`AnomalyDetectionService`
 
 Solo afinar umbrales de R1–R3 no requiere código: edita `appsettings.json`.
 
-## Requisitos
+## Instalar y correr
 
-- SDK .NET 8 (`dotnet --version` → 8.x)
+### 1. Instalar .NET 8
+
+Hace falta el SDK 8 (`dotnet --version` debe empezar por `8.`).
+
+**macOS (Homebrew):**
 
 ```bash
-export PATH="$(brew --prefix dotnet@8)/bin:$PATH"   # si usas Homebrew
+brew install dotnet@8
+export PATH="$(brew --prefix dotnet@8)/bin:$PATH"
 ```
 
-## Cómo correr
+Añade el `export` a `~/.zshrc` si quieres que quede permanente.
+
+**Otras plataformas:** [dotnet.microsoft.com/download/dotnet/8.0](https://dotnet.microsoft.com/download/dotnet/8.0)
+
+SQLite va embebido con EF Core: no hay que instalar motor de base de datos.
+
+### 2. Restaurar, build y tests
+
+Desde la raíz del repo:
 
 ```bash
 dotnet restore
 dotnet build
+dotnet test
+```
+
+### 3. Arrancar la API
+
+```bash
 dotnet run --project src/Co2Monitoring.Api
 ```
 
-Swagger: `http://localhost:5120/swagger`  
-Health: `GET /api/v1/health`  
-Al arrancar se hace seed del dataset de ejemplo (si la DB está vacía).
+Por defecto (perfil `http`): `http://localhost:5120`
 
-Evaluar todo:
+| Recurso | URL |
+|---------|-----|
+| Swagger | http://localhost:5120/swagger |
+| Health | http://localhost:5120/api/v1/health |
+
+Al arrancar se crea `co2monitoring.db` y, si está vacía, se carga el dataset de ejemplo.
+
+### 4. Probar detección
 
 ```bash
 curl -X POST http://localhost:5120/api/v1/anomaly-reviews
 ```
 
 Esperado: ids **4, 7, 8** con `requiresReview: true` / `High`.
+
+Más curls y colección Postman: [`docs/API_CURLS.md`](docs/API_CURLS.md).
 
 ## API (v1)
 
