@@ -50,6 +50,20 @@ Todo lo afinable está en `src/Co2Monitoring.Api/appsettings.json` → sección 
 
 Edita el JSON y reinicia (o el siguiente request si el host recarga el archivo).
 
+## Cómo agregar una nueva regla
+
+Las reglas implementan `IAnomalyRule`. El orquestador (`AnomalyDetectionService`) ya las ejecuta todas, junta reasons y toma la severidad máxima — **no hace falta tocarlo**.
+
+1. **(Opcional)** Si necesitas umbrales nuevos, añádelos en `Domain/AnomalyDetectionOptions.cs` y en `appsettings.json` bajo `AnomalyDetection`.
+2. **Crea** una clase en `Services/Rules/` que implemente `IAnomalyRule` (`Code` + `Evaluate` → `AnomalyRuleResult` o `null` si no dispara).
+3. **Registra** en `Program.cs`:
+   ```csharp
+   builder.Services.AddSingleton<IAnomalyRule, MaxEnergyCapRule>();
+   ```
+4. **(Recomendado)** Añade un test en `tests/Co2Monitoring.UnitTests/`.
+
+Solo afinar umbrales de R1–R3 no requiere código: edita `appsettings.json`.
+
 ## Requisitos
 
 - SDK .NET 8 (`dotnet --version` → 8.x)
