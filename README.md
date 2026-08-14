@@ -172,5 +172,5 @@ Sí tiene sentido como **apoyo**, detrás de las reglas:
 No se envía al LLM el registro crudo a que “adivine” si es anómalo. El prompt template (campos `{{site}}`, `{{avgEnergyKwh}}`, etc.) está en [`docs/BUSINESS_RULES.md`](docs/BUSINESS_RULES.md).
 
 
-## Video explicativo de la solucion:
+## Video explicativo de la solución:
 https://drive.google.com/file/d/13ChzAEJS9W4oban1yx5spLgymczoxyGL/view?usp=sharing
