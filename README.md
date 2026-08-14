@@ -94,7 +94,7 @@ dotnet build
 dotnet test
 ```
 
-### 3. Arrancar la API
+### 3. Arrancar el API
 
 ```bash
 dotnet run --project src/Co2Monitoring.Api
@@ -137,8 +137,36 @@ Más curls y colección Postman: [`docs/API_CURLS.md`](docs/API_CURLS.md).
 dotnet test
 ```
 
-## Escenarios A / B
+## Escenario A — “Madrid subió el consumo, pero es verdad”
 
-**A — Crecimiento real:** no apagar detección; capacidad / feedback del revisor (`BUSINESS_RULES.md`).
+El algoritmo marca esto como raro:
 
-**B — LLM:** apoyo opcional, no juez único (template en `BUSINESS_RULES.md`).
+```json
+{ "site": "Madrid", "month": "2026-05", "energyKwh": 25000, "co2Kg": 5900 }
+```
+
+Luego el cliente dice: en mayo ampliaron la fábrica y metieron una línea nueva. El dato es correcto; el sistema no “se equivocó” del todo: vio un salto vs histórico y pidió revisión, que es exactamente lo que tiene que hacer.
+
+Lo que no haría es apagar la detección o subir umbrales a lo loco para que este caso pase. Si lo hago, el próximo pico de verdad (un 79k como el id 4) se me cuela al reporting.
+
+Lo que sí cambiaría: darle **contexto de negocio** al sistema.
+
+- Un evento de sede (“en mayo crecimos X%”) para resetear la media o aflojar umbrales a partir de esa fecha.
+- Que el revisor pueda marcar “justificado”. Ese mes entra al histórico bueno y deja de parecer un outlier eterno.
+- Umbrales distintos si la sede está en expansión vs estable.
+- En High, solo encolar revisión. Nadie tira el dato del ESG sin una persona de por medio.
+
+En corto: el falso positivo se arregla con feedback y capacidad, no desconectando las reglas.
+
+## Escenario B — “¿Y si le preguntamos a un LLM cada registro?”
+
+Mala idea como juez único.
+
+Cada alta iría a un modelo: caro, lento, no siempre dice lo mismo dos veces, y en ESG te van a preguntar *por qué* se aceptó o se rechazó. “Porque el chat lo dijo” no aguanta una auditoría. Además el modelo no conoce el histórico de Madrid a menos que se lo pases tú, y puede inventar umbrales.
+
+Sí tiene sentido como **apoyo**, detrás de las reglas:
+
+1. El sistema calcula stats y dispara R1–R3 (determinista, barato, explicable).
+2. Si hace falta, el LLM recibe esos números ya hechos y ayuda a redactar el `reason` o a contrastar.
+
+No mandamos el registro crudo a que “adivine” si es anómalo. El prompt template (campos `{{site}}`, `{{avgEnergyKwh}}`, etc.) está en [`docs/BUSINESS_RULES.md`](docs/BUSINESS_RULES.md). En este MVP no hay llamada real a ningún proveedor.
