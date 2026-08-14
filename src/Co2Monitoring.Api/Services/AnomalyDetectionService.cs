@@ -17,7 +17,7 @@ public class AnomalyDetectionService
         AppDbContext db,
         SiteStatsCalculator statsCalculator,
         IEnumerable<IAnomalyRule> rules,
-        IOptions<AnomalyDetectionOptions> options)
+        IOptionsSnapshot<AnomalyDetectionOptions> options)
     {
         _db = db;
         _statsCalculator = statsCalculator;

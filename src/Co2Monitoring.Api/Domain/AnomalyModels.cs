@@ -25,6 +25,8 @@ public class SiteStats
     public ConsumptionRecord? PreviousMonth { get; set; }
     public decimal? EnergyMomChangePercent { get; set; }
     public decimal? Co2MomChangePercent { get; set; }
+    public decimal? EnergyVsAvgPercent { get; set; }
+    public decimal? Co2VsAvgPercent { get; set; }
     public decimal? IntensityVsAvgPercent { get; set; }
 }
 

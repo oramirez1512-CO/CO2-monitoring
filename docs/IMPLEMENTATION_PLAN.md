@@ -127,18 +127,16 @@ Salida de revisión:
 
 ## 7. Fases
 
-### Hecho — Skeleton simplificado
+### Hecho — Skeleton + reglas
 - [x] Un proyecto Api + tests
 - [x] Domain + Services + Data + Controllers
-- [x] Options en `appsettings.json`
-- [x] Orquestador (sin R1–R3 aún)
+- [x] Options en `appsettings.json` (umbrales editables)
+- [x] `SiteStatsCalculator` + R1 / R2 / R3
+- [x] Seed dataset; ids **4, 7, 8** → review
+- [x] Tests unitarios de reglas
 
-### Siguiente — Reglas
-- [ ] `SiteStatsCalculator` real
-- [ ] R1 InvalidValue / R2 Intensity / R3 StatisticalDeviation
-- [ ] Seed dataset; ids **4, 7, 8** → review
-- [ ] Tests unitarios de reglas
-- [ ] README demo Escenario A / B + vídeo
+### Siguiente — Demo
+- [ ] Notas demo Escenario A / B + guion vídeo ≤ 5 min
 
 ---
 
