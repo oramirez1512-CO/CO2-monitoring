@@ -1,12 +1,9 @@
-using Co2Monitoring.Domain.Entities;
-using Co2Monitoring.Domain.Models;
+using Co2Monitoring.Api.Domain;
 
-namespace Co2Monitoring.Application.Services;
+namespace Co2Monitoring.Api.Services;
 
-/// <summary>
-/// Scaffold: logic lands in the next implementation phase.
-/// </summary>
-public class SiteStatsCalculator : ISiteStatsCalculator
+/// <summary>Builds lookback averages / MoM for R2–R3. Logic lands next.</summary>
+public class SiteStatsCalculator
 {
     public SiteStats Calculate(
         ConsumptionRecord record,

@@ -1,4 +1,4 @@
-namespace Co2Monitoring.Application.Dtos;
+namespace Co2Monitoring.Api.Dtos;
 
 public record CreateConsumptionRecordRequest(
     string Site,
