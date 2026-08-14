@@ -147,7 +147,7 @@ El algoritmo marca esto como raro:
 
 Luego el cliente dice: en mayo ampliaron la fábrica y metieron una línea nueva. El dato es correcto; el sistema no “se equivocó” del todo: vio un salto vs histórico y pidió revisión, que es exactamente lo que tiene que hacer.
 
-Lo que no haría es apagar la detección o subir umbrales a lo loco para que este caso pase. Si lo hago, el próximo pico de verdad (un 79k como el id 4) se me cuela al reporting.
+Lo que no haría es apagar la detección o subir umbrales para que este caso pase. Si lo hago, el próximo pico de verdad (un 79k como el id 4) se colaría al reporting.
 
 Lo que sí cambiaría: darle **contexto de negocio** al sistema.
 
@@ -162,11 +162,11 @@ En corto: el falso positivo se arregla con feedback y capacidad, no desconectand
 
 Mala idea como juez único.
 
-Cada alta iría a un modelo: caro, lento, no siempre dice lo mismo dos veces, y en ESG te van a preguntar *por qué* se aceptó o se rechazó. “Porque el chat lo dijo” no aguanta una auditoría. Además el modelo no conoce el histórico de Madrid a menos que se lo pases tú, y puede inventar umbrales.
+Cada alta iría a un modelo: caro, lento, no siempre dice lo mismo dos veces, y en ESG te van a preguntar *por qué* se aceptó o se rechazó. “Porque el chat lo dijo” no aguanta una auditoría. Además el modelo no conoce el histórico de Madrid a menos que se tenga acceso completo al set de datos, y puede inventar umbrales.
 
 Sí tiene sentido como **apoyo**, detrás de las reglas:
 
 1. El sistema calcula stats y dispara R1–R3 (determinista, barato, explicable).
 2. Si hace falta, el LLM recibe esos números ya hechos y ayuda a redactar el `reason` o a contrastar.
 
-No mandamos el registro crudo a que “adivine” si es anómalo. El prompt template (campos `{{site}}`, `{{avgEnergyKwh}}`, etc.) está en [`docs/BUSINESS_RULES.md`](docs/BUSINESS_RULES.md). En este MVP no hay llamada real a ningún proveedor.
+No se envía al LLM el registro crudo a que “adivine” si es anómalo. El prompt template (campos `{{site}}`, `{{avgEnergyKwh}}`, etc.) está en [`docs/BUSINESS_RULES.md`](docs/BUSINESS_RULES.md).
