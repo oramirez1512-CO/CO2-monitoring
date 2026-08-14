@@ -1,6 +1,7 @@
 using Co2Monitoring.Api.Data;
 using Co2Monitoring.Api.Domain;
 using Co2Monitoring.Api.Services;
+using Co2Monitoring.Api.Services.Rules;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Thresholds live in appsettings.json → "AnomalyDetection".
+// IOptionsSnapshot picks up file changes on the next request (reloadOnChange).
 builder.Services.Configure<AnomalyDetectionOptions>(
     builder.Configuration.GetSection(AnomalyDetectionOptions.SectionName));
 
@@ -20,7 +23,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddSingleton<SiteStatsCalculator>();
 builder.Services.AddScoped<AnomalyDetectionService>();
-// Register R1/R2/R3 here later: services.AddSingleton<IAnomalyRule, InvalidValueRule>();
+
+builder.Services.AddSingleton<IAnomalyRule, InvalidValueRule>();
+builder.Services.AddSingleton<IAnomalyRule, IntensityRule>();
+builder.Services.AddSingleton<IAnomalyRule, StatisticalDeviationRule>();
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>();
@@ -31,6 +37,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.EnsureCreatedAsync();
+    await SampleDataSeeder.SeedIfEmptyAsync(db);
 }
 
 if (app.Environment.IsDevelopment())

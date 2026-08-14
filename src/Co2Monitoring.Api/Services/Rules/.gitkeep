@@ -1,2 +1,0 @@
-// R1 InvalidValueRule, R2 IntensityRule, R3 StatisticalDeviationRule go here.
-// Each implements Domain.IAnomalyRule and is registered in Program.cs.

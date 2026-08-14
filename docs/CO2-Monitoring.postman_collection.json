@@ -1,0 +1,159 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "CO2 Monitoring API",
+    "description": "Colección de endpoints del microservicio CO2 Monitoring.\n\nBase URL por defecto: `http://localhost:5120` (perfil http de launchSettings).\n\nEquivalentes curl:\n\n```bash\n# Health\ncurl http://localhost:5120/api/v1/health\n\n# Listar registros\ncurl http://localhost:5120/api/v1/consumption-records\n\n# Listar por sede\ncurl \"http://localhost:5120/api/v1/consumption-records?site=Madrid\"\n\n# Detalle\ncurl http://localhost:5120/api/v1/consumption-records/4\n\n# Alta\ncurl -X POST http://localhost:5120/api/v1/consumption-records \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"site\":\"Madrid\",\"month\":\"2026-05\",\"energyKwh\":25000,\"co2Kg\":5900}'\n\n# Bulk\ncurl -X POST http://localhost:5120/api/v1/consumption-records/bulk \\\n  -H \"Content-Type: application/json\" \\\n  -d '[{\"site\":\"Sevilla\",\"month\":\"2026-01\",\"energyKwh\":7000,\"co2Kg\":1600}]'\n\n# Evaluar todos\ncurl -X POST http://localhost:5120/api/v1/anomaly-reviews\n\n# Evaluar uno\ncurl -X POST http://localhost:5120/api/v1/anomaly-reviews/4\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5120"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/health",
+            "description": "curl {{baseUrl}}/api/v1/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consumption records",
+      "item": [
+        {
+          "name": "List all",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/consumption-records",
+            "description": "curl {{baseUrl}}/api/v1/consumption-records"
+          }
+        },
+        {
+          "name": "List by site",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/consumption-records?site=Madrid",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "consumption-records"],
+              "query": [
+                {
+                  "key": "site",
+                  "value": "Madrid"
+                }
+              ]
+            },
+            "description": "curl \"{{baseUrl}}/api/v1/consumption-records?site=Madrid\""
+          }
+        },
+        {
+          "name": "Get by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/consumption-records/4",
+            "description": "curl {{baseUrl}}/api/v1/consumption-records/4"
+          }
+        },
+        {
+          "name": "Create one",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"site\": \"Madrid\",\n  \"month\": \"2026-05\",\n  \"energyKwh\": 25000,\n  \"co2Kg\": 5900\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/consumption-records",
+            "description": "curl -X POST {{baseUrl}}/api/v1/consumption-records -H \"Content-Type: application/json\" -d '{\"site\":\"Madrid\",\"month\":\"2026-05\",\"energyKwh\":25000,\"co2Kg\":5900}'"
+          }
+        },
+        {
+          "name": "Create bulk",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"site\": \"Sevilla\",\n    \"month\": \"2026-01\",\n    \"energyKwh\": 7000,\n    \"co2Kg\": 1600\n  },\n  {\n    \"site\": \"Sevilla\",\n    \"month\": \"2026-02\",\n    \"energyKwh\": 7100,\n    \"co2Kg\": 1620\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/consumption-records/bulk",
+            "description": "curl -X POST {{baseUrl}}/api/v1/consumption-records/bulk -H \"Content-Type: application/json\" -d '[...]'"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Anomaly reviews",
+      "item": [
+        {
+          "name": "Assess all",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/anomaly-reviews",
+            "description": "curl -X POST {{baseUrl}}/api/v1/anomaly-reviews\n\nEsperado con seed: ids 4, 7, 8 → requiresReview true / High."
+          }
+        },
+        {
+          "name": "Assess by id (Madrid spike)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/anomaly-reviews/4",
+            "description": "curl -X POST {{baseUrl}}/api/v1/anomaly-reviews/4"
+          }
+        },
+        {
+          "name": "Assess by id (Barcelona invalid)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/anomaly-reviews/7",
+            "description": "curl -X POST {{baseUrl}}/api/v1/anomaly-reviews/7"
+          }
+        },
+        {
+          "name": "Assess by id (Barcelona intensity)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/anomaly-reviews/8",
+            "description": "curl -X POST {{baseUrl}}/api/v1/anomaly-reviews/8"
+          }
+        }
+      ]
+    }
+  ]
+}
