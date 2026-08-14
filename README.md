@@ -16,40 +16,60 @@ Plan técnico: [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
 - .NET 8 / C#
 - ASP.NET Core Web API (REST)
 - EF Core + SQLite
-- **Un solo proyecto** con carpetas (suficiente para una prueba técnica)
+- Un solo proyecto con carpetas
 
-## Estructura (mapa rápido)
+## Estructura
 
 ```
 src/Co2Monitoring.Api/
-  Controllers/     → HTTP (endpoints REST)
-  Domain/          → modelo + umbrales + IAnomalyRule
-  Services/        → detección + stats; Rules/ = R1–R3
-  Data/            → EF Core + SQLite
-  Dtos/            → request/response JSON
-  Program.cs       → arranque y DI
-tests/
-docs/
+  Controllers/        HTTP
+  Domain/             modelo + IAnomalyRule + options
+  Services/           detección + stats
+  Services/Rules/     R1, R2, R3
+  Data/               SQLite + seed
+  Dtos/
+  appsettings.json    ← umbrales editables
 ```
 
-| Carpeta / archivo | Para qué sirve |
-|-------------------|----------------|
-| `Controllers/` | Recibe HTTP, valida input básico, llama a DB o al servicio |
-| `Domain/` | Entidades y contratos de reglas (sin EF ni HTTP) |
-| `Services/` | Orquesta R1–R3 y calcula stats del histórico |
-| `Services/Rules/` | Aquí van las reglas concretas (pendiente) |
-| `Data/` | Persistencia SQLite |
-| `Dtos/` | Formas del JSON de entrada/salida |
-| `appsettings.json` | Umbrales (`AnomalyDetection`) y connection string |
+## Umbrales (config)
+
+Todo lo afinable está en `src/Co2Monitoring.Api/appsettings.json` → sección **`AnomalyDetection`**:
+
+| Clave | Regla | Default |
+|-------|-------|---------|
+| `Validation.MinEnergyKwh` | R1 | `0` |
+| `Validation.MinCo2Kg` | R1 | `0` |
+| `Intensity.MinKgPerKwh` | R2 | `0.05` |
+| `Intensity.MaxKgPerKwh` | R2 | `0.50` |
+| `Stats.LookbackMonths` | R2/R3 | `3` |
+| `Stats.EnergyMomChangePercent` | R3 | `50` |
+| `Stats.EnergyVsAvgPercent` | R3 | `80` |
+| `Stats.Co2MomChangePercent` | R3 | `50` |
+| `Stats.Co2VsAvgPercent` | R3 | `80` |
+| `Stats.IntensityVsAvgPercent` | R2 | `40` |
+
+Edita el JSON y reinicia (o el siguiente request si el host recarga el archivo).
+
+## Cómo agregar una nueva regla
+
+Las reglas implementan `IAnomalyRule`. El orquestador (`AnomalyDetectionService`) ya las ejecuta todas, junta reasons y toma la severidad máxima — **no hace falta tocarlo**.
+
+1. **(Opcional)** Si necesitas umbrales nuevos, añádelos en `Domain/AnomalyDetectionOptions.cs` y en `appsettings.json` bajo `AnomalyDetection`.
+2. **Crea** una clase en `Services/Rules/` que implemente `IAnomalyRule` (`Code` + `Evaluate` → `AnomalyRuleResult` o `null` si no dispara).
+3. **Registra** en `Program.cs`:
+   ```csharp
+   builder.Services.AddSingleton<IAnomalyRule, MaxEnergyCapRule>();
+   ```
+4. **(Recomendado)** Añade un test en `tests/Co2Monitoring.UnitTests/`.
+
+Solo afinar umbrales de R1–R3 no requiere código: edita `appsettings.json`.
 
 ## Requisitos
 
 - SDK .NET 8 (`dotnet --version` → 8.x)
 
-Si instalaste `dotnet@8` con Homebrew:
-
 ```bash
-export PATH="$(brew --prefix dotnet@8)/bin:$PATH"
+export PATH="$(brew --prefix dotnet@8)/bin:$PATH"   # si usas Homebrew
 ```
 
 ## Cómo correr
@@ -60,26 +80,29 @@ dotnet build
 dotnet run --project src/Co2Monitoring.Api
 ```
 
-Swagger (Development): `http://localhost:5120/swagger`  
-Health: `GET /api/v1/health`
+Swagger: `http://localhost:5120/swagger`  
+Health: `GET /api/v1/health`  
+Al arrancar se hace seed del dataset de ejemplo (si la DB está vacía).
+
+Evaluar todo:
+
+```bash
+curl -X POST http://localhost:5120/api/v1/anomaly-reviews
+```
+
+Esperado: ids **4, 7, 8** con `requiresReview: true` / `High`.
 
 ## API (v1)
 
 | Método | Ruta | Qué hace |
 |--------|------|----------|
-| `POST` | `/api/v1/consumption-records` | Alta de un registro |
-| `POST` | `/api/v1/consumption-records/bulk` | Alta masiva |
-| `GET` | `/api/v1/consumption-records` | Listar (`?site=Madrid` opcional) |
+| `POST` | `/api/v1/consumption-records` | Alta |
+| `POST` | `/api/v1/consumption-records/bulk` | Bulk |
+| `GET` | `/api/v1/consumption-records` | Listar (`?site=`) |
 | `GET` | `/api/v1/consumption-records/{id}` | Detalle |
 | `POST` | `/api/v1/anomaly-reviews` | Evaluar todos |
 | `POST` | `/api/v1/anomaly-reviews/{id}` | Evaluar uno |
-| `GET` | `/api/v1/health` | Health check |
-
-## Estado actual
-
-Listo: API + SQLite + orquestador de detección + options.
-
-Pendiente: R1/R2/R3, seed del dataset, tests de reglas, notas demo Escenario A/B.
+| `GET` | `/api/v1/health` | Health |
 
 ## Tests
 
@@ -87,8 +110,8 @@ Pendiente: R1/R2/R3, seed del dataset, tests de reglas, notas demo Escenario A/B
 dotnet test
 ```
 
-## Escenarios de negocio (resumen)
+## Escenarios A / B
 
-**A — Crecimiento real de fábrica:** no apagar la detección; añadir eventos de capacidad / feedback del revisor.
+**A — Crecimiento real:** no apagar detección; capacidad / feedback del revisor (`BUSINESS_RULES.md`).
 
-**B — LLM:** no como juez único. Opcional como apoyo (template en `BUSINESS_RULES.md`).
+**B — LLM:** apoyo opcional, no juez único (template en `BUSINESS_RULES.md`).
