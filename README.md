@@ -3,7 +3,8 @@
 Microservicio .NET 8 para detectar registros raros de energía/CO₂ antes de meterlos en el reporting ESG.
 
 Detalles de criterios: [`docs/BUSINESS_RULES.md`](docs/BUSINESS_RULES.md)  
-Plan técnico: [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)
+Plan técnico: [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)  
+Postman + curls: [`docs/CO2-Monitoring.postman_collection.json`](docs/CO2-Monitoring.postman_collection.json) · [`docs/API_CURLS.md`](docs/API_CURLS.md)
 
 ## Qué hace
 
